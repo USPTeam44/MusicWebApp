@@ -47,14 +47,23 @@ namespace MusicWebApp.Controllers
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create([Bind(Include = "artist_id,artist_name")] Artist artist)
+        public ActionResult Create([Bind(Include = "artist_name")] Artist artist)
         {
-            if (ModelState.IsValid)
+            try
             {
-                db.Artist.Add(artist);
-                db.SaveChanges();
-                return RedirectToAction("Index");
+                if (ModelState.IsValid)
+                {
+                    db.Artist.Add(artist);
+                    db.SaveChanges();
+                    return RedirectToAction("Index");
+                }
             }
+            catch (DataException /* dex */)
+            {
+                //Log the error (uncomment dex variable name and add a line here to write a log.
+                ModelState.AddModelError("", "Unable to save changes. Try again, and if the problem persists see your system administrator.");
+            }
+
 
             return View(artist);
         }
@@ -77,26 +86,45 @@ namespace MusicWebApp.Controllers
         // POST: Artist/Edit/5
         // To protect from overposting attacks, please enable the specific properties you want to bind to, for 
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
+        [HttpPost, ActionName("Edit")]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit([Bind(Include = "artist_id,artist_name")] Artist artist)
-        {
-            if (ModelState.IsValid)
-            {
-                db.Entry(artist).State = EntityState.Modified;
-                db.SaveChanges();
-                return RedirectToAction("Index");
-            }
-            return View(artist);
-        }
-
-        // GET: Artist/Delete/5
-        public ActionResult Delete(int? id)
+        public ActionResult EditPost(int? id)
         {
             if (id == null)
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
+            var artistToUpdate = db.Artist.Find(id);
+            if (TryUpdateModel(artistToUpdate, "",
+               new string[] { "artist_name" }))
+            {
+                try
+                {
+                    db.SaveChanges();
+
+                    return RedirectToAction("Index");
+                }
+                catch (DataException /* dex */)
+                {
+                    //Log the error (uncomment dex variable name and add a line here to write a log.
+                    ModelState.AddModelError("", "Unable to save changes. Try again, and if the problem persists, see your system administrator.");
+                }
+            }
+            return View(artistToUpdate);
+        }
+
+        // GET: Artist/Delete/5
+        public ActionResult Delete(int? id, bool? saveChangesError = false)
+        {
+            if (id == null)
+            {
+                return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+            }
+            if (saveChangesError.GetValueOrDefault())
+            {
+                ViewBag.ErrorMessage = "Delete failed. Try again, and if the problem persists see your system administrator.";
+            }
+
             Artist artist = db.Artist.Find(id);
             if (artist == null)
             {
@@ -106,22 +134,27 @@ namespace MusicWebApp.Controllers
         }
 
         // POST: Artist/Delete/5
-        [HttpPost, ActionName("Delete")]
+        [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult DeleteConfirmed(int id)
+        public ActionResult Delete(int id)
         {
-            Artist artist = db.Artist.Find(id);
-            db.Artist.Remove(artist);
-            db.SaveChanges();
+            try
+            {
+                Artist artist= db.Artist.Find(id);
+                db.Artist.Remove(artist);
+                db.SaveChanges();
+            }
+            catch (DataException/* dex */)
+            {
+                //Log the error (uncomment dex variable name and add a line here to write a log.
+                return RedirectToAction("Delete", new { id = id, saveChangesError = true });
+            }
             return RedirectToAction("Index");
         }
 
         protected override void Dispose(bool disposing)
         {
-            if (disposing)
-            {
-                db.Dispose();
-            }
+            db.Dispose();
             base.Dispose(disposing);
         }
     }

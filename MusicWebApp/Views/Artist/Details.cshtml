@@ -17,6 +17,28 @@
         <dd>
             @Html.DisplayFor(model => model.artist_name)
         </dd>
+        <dt>
+            @Html.DisplayNameFor(model => model.Albums)
+        </dt>
+        <dd>
+            <table class="table">
+                <tr>
+                    <th>Genre name</th>
+                    <th>Album name</th>
+                </tr>
+                @foreach (var item in Model.Albums)  // -> не работи
+            {
+                <tr>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Genre.genre_name);
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.album_name);
+                    </td>
+                </tr>
+        }
+            </table>
+        </dd>
 
     </dl>
 </div>
