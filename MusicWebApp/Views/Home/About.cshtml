@@ -6,3 +6,33 @@
 
 <p>This application is created by <span class="names"> Konstantin, Radoslav and Todor </span> - you're welcome :). </p>
 
+@model IEnumerable<MusicWebApp.ViewModels.ArtistAlbums>
+
+@{
+    ViewBag.Title = "Artist Body Statistics";
+}
+
+<h2>Album record company statistics</h2>
+
+<table>
+    <tr>
+        <th>
+            Albums
+        </th>
+        <th>
+            Artists
+        </th>
+    </tr>
+
+    @foreach (var item in Model)
+    {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.album_recording_company)
+            </td>
+            <td>
+                @item.AlbumCount
+            </td>
+        </tr>
+    }
+</table>
